@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pressure Check</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Arial,sans-serif}
+body{min-height:100vh;background:#f8f6ff;color:#29243a;padding:40px 20px}
+.container{max-width:800px;margin:auto}
+.header{text-align:center;margin-bottom:30px}
+.tag{display:inline-block;background:#eee9ff;color:#7559d6;padding:7px 15px;border-radius:30px;font-size:13px;font-weight:700;margin-bottom:15px}
+.header h1{font-size:40px;letter-spacing:-1px;margin-bottom:12px}
+.header p{color:#777185;line-height:1.6}
+.quiz-box,.result-box{background:white;border-radius:28px;padding:35px;box-shadow:0 15px 45px rgba(80,60,130,.1)}
+.progress-info{display:flex;justify-content:space-between;color:#888197;font-size:13px;margin-bottom:8px}
+.progress{height:7px;background:#eeeaf5;border-radius:20px;overflow:hidden;margin-bottom:30px}
+.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#9577ff,#ff8dbb);transition:.4s}
+.question-number{color:#8668df;font-size:13px;font-weight:700;margin-bottom:10px}
+.question{font-size:24px;line-height:1.4;margin-bottom:25px}
+.options{display:flex;flex-direction:column;gap:12px}
+.option{padding:17px;border:2px solid #eeeaf5;border-radius:16px;cursor:pointer;line-height:1.5;transition:.2s}
+.option:hover{border-color:#b9a7ff;background:#faf8ff;transform:translateY(-2px)}
+.option.selected{border-color:#896ce5;background:#f2eeff}
+.next-btn,.restart-btn{width:100%;border:none;border-radius:15px;padding:15px;margin-top:25px;font-size:16px;font-weight:700;cursor:pointer}
+.next-btn{background:#29243a;color:white}.next-btn:hover{background:#7559d6}
+.restart-btn{background:#eee9ff;color:#7559d6}.restart-btn:hover{background:#e2d9ff}
+.result-box{display:none;text-align:center}
+.result-icon{font-size:55px;margin-bottom:15px}
+.result-label{color:#888197;font-size:14px;margin-bottom:10px}
+.result-title{font-size:32px;margin-bottom:22px}
+.result-explanation{text-align:left;background:#faf9fd;border-radius:20px;padding:25px;line-height:1.7;color:#625d70}
+.result-explanation h3{color:#29243a;margin-bottom:10px;font-size:19px}
+.result-explanation p{font-size:15px}
+@media(max-width:600px){body{padding:25px 12px}.header h1{font-size:31px}.quiz-box,.result-box{padding:23px}.question{font-size:20px}.result-title{font-size:27px}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<div class="tag">✦ PRESSURE CHECK</div>
+<h1>Bạn đang chịu áp lực từ đâu?</h1>
+<p>Trả lời những câu hỏi dưới đây để tìm ra<br>nguồn áp lực đang tác động đến bạn nhiều nhất.</p>
+</div>
+
+<div class="quiz-box" id="quizBox">
+<div class="progress-info"><span id="progressText">Câu 1 / 12</span><span id="progressPercent">8%</span></div>
+<div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+<div class="question-number" id="questionNumber">QUESTION 01</div>
+<div class="question" id="question"></div>
+<div class="options" id="options"></div>
+<button class="next-btn" onclick="nextQuestion()" id="nextBtn">Tiếp tục →</button>
+</div>
+
+<div class="result-box" id="resultBox">
+<div class="result-icon" id="resultIcon">✦</div>
+<div class="result-label">Nguồn áp lực tác động lớn nhất đến bạn là</div>
+<div class="result-title" id="resultTitle"></div>
+<div class="result-explanation">
+<h3 id="explanationTitle"></h3>
+<p id="explanationText"></p>
+</div>
+<button class="restart-btn" onclick="restartQuiz()">↻ Làm lại</button>
+</div>
+</div>
+
+<script>
+const questions=[
+{question:"Khi kết quả học tập không như mong đợi, điều gì khiến bạn lo lắng nhất?",answers:[["Sợ bố mẹ thất vọng hoặc trách mắng.","family"],["Sợ bạn bè thấy mình kém hơn.","peer"],["Thất vọng vì mình chưa đủ tốt.","self"],["Lo điểm thấp ảnh hưởng đến thành tích.","grade"]]},
+{question:"Bạn thường cảm thấy áp lực nhất khi...",answers:[["Gia đình đặt kỳ vọng cao vào mình.","family"],["Nhìn thấy bạn bè đạt thành tích tốt.","peer"],["Cảm thấy bản thân chưa đạt tiêu chuẩn mình đặt ra.","self"],["Có bài kiểm tra hoặc kỳ thi quan trọng.","grade"]]},
+{question:"Nếu điểm của bạn thấp hơn bạn bè, suy nghĩ nào dễ xuất hiện nhất?",answers:[["Bố mẹ sẽ không hài lòng.","family"],["Mình đang thua kém các bạn.","peer"],["Mình phải cố gắng hơn nữa.","self"],["Điểm này sẽ ảnh hưởng đến kết quả chung.","grade"]]},
+{question:"Điều gì khiến bạn khó thư giãn sau giờ học?",answers:[["Lo mình chưa đáp ứng kỳ vọng của gia đình.","family"],["Nghĩ về thành tích của những người xung quanh.","peer"],["Cảm thấy mình còn rất nhiều việc phải hoàn thành.","self"],["Lo lắng về những bài kiểm tra sắp tới.","grade"]]},
+{question:"Bạn từng học thêm hoặc học nhiều hơn vì...",answers:[["Gia đình mong muốn bạn học như vậy.","family"],["Bạn bè đều đang học thêm.","peer"],["Bạn muốn bản thân tiến bộ hơn.","self"],["Bạn cần cải thiện điểm số.","grade"]]},
+{question:"Khi một người bạn đạt thành tích rất cao, bạn thường...",answers:[["Nghĩ rằng gia đình sẽ lấy bạn ấy làm hình mẫu.","family"],["So sánh thành tích của mình với bạn ấy.","peer"],["Tự nhắc mình phải cố gắng hơn.","self"],["Lo rằng điểm số của mình chưa đủ tốt.","grade"]]},
+{question:"Bạn sợ điều gì nhất khi mắc lỗi trong học tập?",answers:[["Làm người thân thất vọng.","family"],["Bị bạn bè đánh giá.","peer"],["Cảm thấy mình không đủ năng lực.","self"],["Điểm số bị ảnh hưởng.","grade"]]},
+{question:"Điều gì khiến bạn cảm thấy mình 'phải' thành công?",answers:[["Kỳ vọng của gia đình.","family"],["Thành công của những người xung quanh.","peer"],["Mục tiêu và tiêu chuẩn của chính mình.","self"],["Thành tích và điểm số.","grade"]]},
+{question:"Khi chuẩn bị cho một kỳ thi quan trọng, bạn thường...",answers:[["Lo bố mẹ sẽ phản ứng thế nào nếu điểm thấp.","family"],["Nghĩ đến việc bạn bè sẽ đạt bao nhiêu điểm.","peer"],["Tự ép mình phải chuẩn bị thật hoàn hảo.","self"],["Lo lắng trực tiếp về kết quả bài thi.","grade"]]},
+{question:"Bạn thường so sánh bản thân với...",answers:[["Những người mà gia đình kỳ vọng bạn giống.","family"],["Bạn bè hoặc những người cùng tuổi.","peer"],["Phiên bản tốt hơn mà bạn muốn trở thành.","self"],["Những người có điểm số cao hơn.","grade"]]},
+{question:"Nếu không đạt mục tiêu học tập, điều gì ảnh hưởng đến bạn nhiều nhất?",answers:[["Phản ứng của gia đình.","family"],["Việc mình kém hơn người khác.","peer"],["Cảm giác mình đã thất bại với chính mình.","self"],["Kết quả và điểm số không đạt yêu cầu.","grade"]]},
+{question:"Câu nào gần với suy nghĩ của bạn nhất?",answers:[["Mình phải làm tốt để gia đình yên tâm.","family"],["Mình không muốn trở thành người kém nhất nhóm.","peer"],["Mình phải trở thành phiên bản tốt hơn.","self"],["Mình nhất định phải đạt điểm cao.","grade"]]}
+];
+
+let currentQuestion=0,selectedAnswer=null;
+let scores={family:0,peer:0,self:0,grade:0};
+
+function loadQuestion(){
+const current=questions[currentQuestion];
+document.getElementById("questionNumber").innerText="QUESTION "+String(currentQuestion+1).padStart(2,"0");
+document.getElementById("question").innerText=current.question;
+document.getElementById("progressText").innerText=`Câu ${currentQuestion+1} / ${questions.length}`;
+const percent=Math.round(((currentQuestion+1)/questions.length)*100);
+document.getElementById("progressPercent").innerText=percent+"%";
+document.getElementById("progressBar").style.width=percent+"%";
+const box=document.getElementById("options");box.innerHTML="";selectedAnswer=null;
+current.answers.forEach(answer=>{
+const option=document.createElement("div");option.className="option";option.innerText=answer[0];
+option.onclick=()=>{
+document.querySelectorAll(".option").forEach(x=>x.classList.remove("selected"));
+option.classList.add("selected");selectedAnswer=answer[1];
+};
+box.appendChild(option);
+});
+document.getElementById("nextBtn").innerText=currentQuestion===questions.length-1?"Xem kết quả ✦":"Tiếp tục →";
+}
+
+function nextQuestion(){
+if(!selectedAnswer){alert("Hãy chọn một câu trả lời nhé ✦");return;}
+scores[selectedAnswer]++;currentQuestion++;
+if(currentQuestion<questions.length)loadQuestion();else showResult();
+}
+
+function showResult(){
+document.getElementById("quizBox").style.display="none";
+document.getElementById("resultBox").style.display="block";
+const values=Object.values(scores),maxScore=Math.max(...values);
+const highestGroups=values.filter(score=>score===maxScore).length;
+let title,icon,explanationTitle,explanationText;
+
+if(highestGroups>1){
+title="Nhiều loại áp lực";icon="🌈";
+explanationTitle="Áp lực đến từ nhiều phía";
+explanationText="Các câu trả lời của bạn cho thấy không có một nguồn áp lực duy nhất nổi bật. Gia đình, đồng trang lứa, những kỳ vọng từ bản thân và áp lực điểm số có thể cùng tác động đến bạn.";
+}else if(scores.family===maxScore){
+title="Áp lực từ gia đình";icon="🏠";
+explanationTitle="Kỳ vọng từ gia đình";
+explanationText="Nguồn áp lực nổi bật nhất của bạn đến từ gia đình. Những kỳ vọng, mong muốn hoặc phản ứng của người thân đối với việc học và thành tích có thể khiến bạn cảm thấy cần phải cố gắng hoặc đạt được một tiêu chuẩn nhất định.";
+}else if(scores.peer===maxScore){
+title="Áp lực đồng trang lứa";icon="👥";
+explanationTitle="Ảnh hưởng từ những người xung quanh";
+explanationText="Nguồn áp lực nổi bật nhất của bạn đến từ đồng trang lứa. Việc quan sát, so sánh hoặc quan tâm đến thành tích của bạn bè và những người cùng tuổi có thể khiến bạn cảm thấy mình cần phải theo kịp.";
+}else if(scores.self===maxScore){
+title="Áp lực từ bản thân";icon="🪞";
+explanationTitle="Những kỳ vọng bạn đặt lên chính mình";
+explanationText="Nguồn áp lực nổi bật nhất của bạn đến từ chính bản thân. Bạn có thể thường đặt ra những tiêu chuẩn cao cho mình, muốn đạt kết quả tốt hoặc cảm thấy chưa hài lòng khi mình chưa đạt được điều mong muốn.";
+}else{
+title="Áp lực điểm số";icon="📚";
+explanationTitle="Kết quả học tập";
+explanationText="Nguồn áp lực nổi bật nhất của bạn đến từ điểm số. Các bài kiểm tra, kỳ thi, thành tích hoặc kết quả học tập có thể khiến bạn cảm thấy lo lắng và tạo áp lực trong quá trình học tập.";
+}
+document.getElementById("resultIcon").innerText=icon;
+document.getElementById("resultTitle").innerText=title;
+document.getElementById("explanationTitle").innerText=explanationTitle;
+document.getElementById("explanationText").innerText=explanationText;
+}
+
+function restartQuiz(){
+currentQuestion=0;selectedAnswer=null;
+scores={family:0,peer:0,self:0,grade:0};
+document.getElementById("resultBox").style.display="none";
+document.getElementById("quizBox").style.display="block";
+loadQuestion();
+}
+loadQuestion();
+</script>
+</body>
+</html>
